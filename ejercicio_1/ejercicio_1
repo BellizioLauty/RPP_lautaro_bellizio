@@ -1,0 +1,131 @@
+DEPOSITOS = ['tierra del fuego', 'tucuman', 'mendoza', 'bs as', 'misiones', 'santa fe']
+EQUIPOS = ['barcelona', 'inter miami', 'manchester city', 'real madrid']
+default_price = 100
+
+# función para inicializar la matriz de existencias
+def inicializar_existencias():
+    # genera una matriz 6x5 con la cantidad de camisetas por equipo en cada depósito
+    stock = []
+    print('Ingrese el stock para cada equipo en cada depósito.')
+    for deposito in DEPOSITOS:
+        fila = []
+        for equipo in EQUIPOS:
+            cantidad = int(input(f'Ingrese cantidad de camisetas de {equipo} en {deposito}: '))
+            fila.append(cantidad)
+        stock.append(fila)
+    return stock
+
+# función para calcular totales por filas o columnas
+def calcular_totales(matriz, por_filas=True):
+    totales = []
+    if por_filas:
+        for fila in matriz:
+            totales.append(sum(fila))
+    else:
+        for col in range(len(matriz[0])):
+            total = sum(matriz[fila][col] for fila in range(len(matriz)))
+            totales.append(total)
+    return totales
+
+#funcion para estimar el stock por encima de un limite
+def estimar_stock(totales, nombres, limite):
+    for i, total in enumerate(totales):
+        if total > limite:
+            print(f'{nombres[i]} tiene un stock de {total} que supera el límite de {limite}.')
+
+# función para obtener el depósito con la mayor cantidad de camisetas de cada equipo
+def obtener_maximo_por_equipo(matriz):
+    for col, equipo in enumerate(EQUIPOS):
+        max_cantidad = 0
+        deposito_max = ''
+        for fila, deposito in enumerate(DEPOSITOS):
+            if matriz[fila][col] > max_cantidad:
+                max_cantidad = matriz[fila][col]
+                deposito_max = deposito
+        print(f'El depósito con más camisetas de {equipo} es {deposito_max} con {max_cantidad} unidades.')
+
+#funciones para cargar ventas y actualizar stock y recaudaciones
+def cargar_ventas(stock, precios=None):
+    if precios is None:
+        precios = [default_price] * len(EQUIPOS)
+    
+    recaudacion = [[0 for _ in EQUIPOS] for _ in DEPOSITOS]
+    while True:
+        print('Ingrese la venta (Depósito, Equipo, Cantidad). Para salir ingrese "fin".')
+        entrada = input('Venta: ')
+        if entrada.lower() == 'fin':
+            break
+        deposito, equipo, cantidad = entrada.split()
+        cantidad = int(cantidad)
+        
+        # obtiene los índices correspondientes al depósito y equipo
+        indice_deposito = DEPOSITOS.index(deposito)
+        indice_equipo = EQUIPOS.index(equipo)
+        
+        # actualiza el stock y la recaudación
+        stock[indice_deposito][indice_equipo] -= cantidad
+        recaudacion[indice_deposito][indice_equipo] += cantidad * precios[indice_equipo]
+    
+    return recaudacion
+
+# menú principal
+def menu():
+    stock = []
+    while True:
+        print('\nMenú de opciones:')
+        print('1. Obtener existencias')
+        print('2. Mostrar depósitos con más de 10,000 camisetas en stock')
+        print('3. Mostrar equipos con más de 5,000 camisetas en stock')
+        print('4. Obtener máxima cantidad de camisetas de cada equipo')
+        print('5. Cargar ventas')
+        print('6. Salir')
+        
+        opcion = int(input('Seleccione una opción: '))
+        
+        if opcion == 1:
+            stock = inicializar_existencias()
+        
+        elif opcion == 2:
+            if stock:
+                totales_por_deposito = calcular_totales(stock, por_filas=True)
+                estimar_stock(totales_por_deposito, DEPOSITOS, 10000)
+            else:
+                print('Debe cargar existencias primero.')
+        
+        elif opcion == 3:
+            if stock:
+                totales_por_equipo = calcular_totales(stock, por_filas=False)
+                estimar_stock(totales_por_equipo, EQUIPOS, 5000)
+            else:
+                print('Debe cargar existencias primero.')
+        
+        elif opcion == 4:
+            if stock:
+                obtener_maximo_por_equipo(stock)
+            else:
+                print('Debe cargar existencias primero.')
+        
+        elif opcion == 5:
+            if stock:
+                precios = input('Ingrese precios separados por coma o presione Enter para precio estándar de 100: ')
+                if precios:
+                    precios = list(map(int, precios.split(',')))
+                else:
+                    precios = None
+                recaudacion = cargar_ventas(stock, precios)
+                print('Recaudación total por depósito y equipo:')
+                for i, deposito in enumerate(DEPOSITOS):
+                    for j, equipo in enumerate(EQUIPOS):
+                        print(f'{deposito} - {equipo}: ${recaudacion[i][j]}')
+            else:
+                print('Debe cargar existencias primero.')
+        
+        elif opcion == 6:
+            print('Saliendo del programa.')
+            break
+        
+        else:
+            print('Opción no válida. Intente de nuevo.')
+
+#ejecute el menu
+menu()
